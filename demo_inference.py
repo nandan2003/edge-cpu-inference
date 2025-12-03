@@ -1,40 +1,52 @@
 import time
+import sys
 from llama_cpp import Llama
 
-# 1. Initialize the Model
-# n_ctx=2048:  The "memory" of the conversation (context window).
-# n_threads=4: We are using all 4 vCPUs of your D4s_v3.
-print("Loading model...")
-start_load = time.time()
+# CONFIGURATION: Use the High-Speed Model
+MODEL_PATH = "./Phi-3-mini-4k-instruct-q4.gguf"
+
+print("--- LOADING ENGINE (PHI-3 3.8B) ---")
 llm = Llama(
-    model_path="./mistral-7b-instruct-v0.2.Q4_K_M.gguf",
-    n_ctx=2048,
+    model_path=MODEL_PATH,
+    n_ctx=4096,
     n_threads=4, 
     verbose=False
 )
-print(f"Model loaded in {time.time() - start_load:.2f} seconds.")
 
-# 2. Define the Prompt
-prompt = "Q: Explain the concept of 'Recursion' in programming to a high school student. A: "
-
-# 3. Run Inference
-print("Generating response...")
-start_gen = time.time()
-output = llm(
-    prompt, 
-    max_tokens=200, # Limit response length
-    stop=["Q:", "\n"], # Stop if it tries to ask a new question
-    echo=True 
-)
-end_gen = time.time()
-
-# 4. Print Result & Stats
 print("\n" + "="*50)
-print(output['choices'][0]['text'])
+print(" 🚀 HIGH-PERFORMANCE CPU INFERENCE READY")
+print(f" Model: Phi-3 Mini | Quant: Q4_0 | Threads: 4")
 print("="*50 + "\n")
 
-# Calculate Speed
-tokens = output['usage']['completion_tokens']
-duration = end_gen - start_gen
-print(f"Generated {tokens} tokens in {duration:.2f} seconds.")
-print(f"Speed: {tokens / duration:.2f} tokens/second")
+# Interactive Loop
+while True:
+    try:
+        user_input = input("\nUser: ")
+        if user_input.lower() in ['exit', 'quit']:
+            break
+            
+        # Phi-3 Prompt Format
+        prompt = f"<|user|>\n{user_input}<|end|>\n<|assistant|>"
+        
+        print("AI: ", end="", flush=True)
+        
+        start = time.time()
+        stream = llm(
+            prompt,
+            max_tokens=250,
+            stop=["<|end|>"],
+            stream=True 
+        )
+        
+        token_count = 0
+        for output in stream:
+            text = output['choices'][0]['text']
+            print(text, end="", flush=True)
+            token_count += 1
+            
+        print("\n")
+        
+    except KeyboardInterrupt:
+        break
+
+print("\nShutting down.")
