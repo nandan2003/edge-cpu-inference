@@ -1,30 +1,26 @@
-import time
+import psutil
 import os
-import subprocess
+import gc
 from llama_cpp import Llama
+from models_config import get_model_path
 
-MODEL_PATH = "./mistral-7b-instruct-v0.2.Q4_K_M.gguf"
-
-def clear_cache():
-    # This command forces Linux to drop cached files from RAM
-    print(" [System] Clearing OS Page Cache...")
-    subprocess.run(["sudo", "sh", "-c", "echo 3 > /proc/sys/vm/drop_caches"])
-
-def benchmark_load(label):
-    start = time.time()
-    # n_gpu_layers=0 forces CPU
-    llm = Llama(model_path=MODEL_PATH, n_threads=4, verbose=False)
-    duration = time.time() - start
-    print(f" {label} Load Time: {duration:.4f} seconds")
-
-print("--- STARTING SYSTEM MEMORY TEST ---")
-
-# TEST 1: COLD START (Simulating a fresh server boot)
-clear_cache()
-benchmark_load("COLD START (Disk Read)")
-
-# TEST 2: WARM START (Simulating subsequent requests)
-# We do NOT clear cache here. Linux keeps the file in RAM.
-benchmark_load("WARM START (RAM Cache)")
-
-print("---------------------------------------")
+def measure_static_footprint(model_key):
+    path = get_model_path(model_key)
+    process = psutil.Process(os.getpid())
+    
+    # Baseline (Python overhead)
+    gc.collect()
+    start_mem = process.memory_info().rss
+    
+    try:
+        # Load model with minimal context just to measure weight footprint
+        llm = Llama(model_path=path, n_threads=4, n_ctx=512, verbose=False)
+        
+        peak_mem = process.memory_info().rss
+        footprint_gb = (peak_mem - start_mem) / (1024**3)
+        
+        del llm
+        return round(footprint_gb, 2)
+        
+    except Exception:
+        return 0.0
