@@ -167,7 +167,7 @@ All results are consolidated into:
 
 # Final Benchmark Results (8 Models)
 
-Below are the raw, observed results from your VM.
+Below are the raw, observed results from VM.
 
 ---
 
