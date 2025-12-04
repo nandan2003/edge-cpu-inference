@@ -54,6 +54,11 @@ Each model is evaluated in Q4_K_M GGUF format:
 
 ---
 
+![Benchmark Plot](benchmark_plot.png)
+*Figure 1: Efficiency Frontier. Qwen 2.5 (3B) dominates the high-accuracy quadrant, while TinyLlama defines the speed ceiling.*
+
+---
+
 ## Benchmark Methodology
 
 Each model undergoes four independent analyses:
@@ -294,6 +299,19 @@ Highest combined accuracy, low RAM cost, acceptable speed.
 
 ---
 
+### Key Engineering Insights
+
+**1. Memory Bandwidth Constraints on 7B Architectures**
+Benchmarks indicate that 7B parameter models (Llama 2, Mistral) are suboptimal for CPU-only edge deployment. Throughput consistently plateaued at ~3.6 tokens/second, a hard limit imposed by memory bandwidth saturation rather than CPU compute availability. Additionally, 4-bit quantization disproportionately impacted reasoning accuracy in these older architectures compared to modern 3B models.
+
+**2. Qwen 2.5 as the Pareto-Optimal Solution**
+Qwen 2.5 (3B) represents the most efficient balance of performance and resource usage. It fits within a 3.33 GB static memory footprint—leaving sufficient headroom on 4GB devices—while maintaining 80% reasoning accuracy. It is the only architecture evaluated that delivers reliable code generation and logic at real-time speeds without GPU acceleration.
+
+**3. Quantization Sensitivity in DeepSeek R1**
+While the DeepSeek R1 Distill (1.5B) model achieved the highest throughput (17 t/s) and lowest memory usage, it failed to meet the minimum accuracy threshold for complex tasks. The 1.5B parameter space proved highly sensitive to 4-bit quantization, degrading the logic centers required for multi-step reasoning. Consequently, this architecture is recommended strictly for low-complexity summarization rather than logic-dependent operations.
+
+---
+
 # How to Reproduce
 
 ### 1. Install Dependencies
@@ -341,5 +359,3 @@ The benchmark suite itself demonstrates:
 * rigorous deterministic tests
 * repeatability
 * clear trade-off visualization
-
-This repository represents a complete CPU inference research toolchain suitable for portfolio demonstration, edge deployment analysis, or offline LLM performance study.
