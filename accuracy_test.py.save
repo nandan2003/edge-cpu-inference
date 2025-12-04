@@ -1,0 +1,42 @@
+from models_config import MODEL_REGISTRY
+
+# 4 coding, 4 reasoning, 4 chat = 12 tasks
+luate_accuracy(llm, model_key: str):
+    meta = MODEL_REGISTRY[model_key]
+    template = meta["prompt_template"]
+
+    scores = {"Coding": 0, "Reasoning": 0, "Chat": 0, "Total": 0}
+    counts = {"Coding": 0, "Reasoning": 0, "Chat": 0, "Total": 0}
+
+    print("   Profiling intelligence (Coding, Reasoning, Chat)...", end="", flush=True)
+
+    for test in TEST_SUITE:
+        cat = test["cat"]
+        counts[cat] += 1
+        counts["Total"] += 1
+
+        full_prompt = template.format(prompt=test["prompt"])
+
+        out = llm(
+            full_prompt,
+            max_tokens=128,
+            stop=["<|end|>", "\n\n", "User:", "```"],
+            echo=False,
+            temperature=0.0,
+        )
+        response = out["choices"][0]["text"].strip()
+
+        if test["check"](response):
+            scores[cat] += 1
+            scores["Total"] += 1
+            print(".", end="", flush=True)
+        else:
+            print("x", end="", flush=True)
+
+    print(" Done.")
+
+    results = {}
+    for k in scores:
+        results[k] = round((scores[k] / counts[k]) * 100.0, 1) if counts[k] > 0 else 0.0
+
+    return results

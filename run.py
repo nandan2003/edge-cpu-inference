@@ -9,6 +9,7 @@ from benchmark_suite import run_throughput_test
 from kv_cache_profile import profile_kv_growth
 from memory_test import measure_static_footprint
 from accuracy_test import evaluate_accuracy
+from plot_benchmark import plot_benchmark_results  # <--- Imported
 
 def get_ram_gb():
     return psutil.Process(os.getpid()).memory_info().rss / (1024**3)
@@ -16,7 +17,7 @@ def get_ram_gb():
 def main():
     models = list_available_models()
     if not models:
-        print("No models available.")
+        print("No models available. Run 'python download_manager.py' first.")
         return
 
     raw_data = []
@@ -65,6 +66,8 @@ def main():
         except Exception as e:
             print(f"Failure: {e}")
 
+    # --- REPORTING ---
+
     print("\n" + "="*80)
     print("FINAL RECOMMENDATION MATRIX")
     print("="*80)
@@ -90,7 +93,7 @@ def main():
     print(tabulate(table, headers=["Model", "Speed", "Overall Acc"], tablefmt="github"))
 
     print("\n" + "="*80)
-    print("FULL METRIC TABLE (ALL MODELS)")
+    print("FULL METRIC TABLE")
     print("="*80)
 
     rows = [
@@ -116,71 +119,12 @@ def main():
         tablefmt="github"
     ))
 
-    print("\nDETAILED CODING METRICS")
-    coding_rows = [
-        [
-            m["model"],
-            f"{m['acc_code']}%",
-            f"{m['speed']} t/s",
-            f"{m['acc_total']}%",
-            f"{m['ram_cost']} GB"
-        ]
-        for m in code_rank
-    ]
-    print(tabulate(
-        coding_rows,
-        headers=["Model", "Code Acc", "Speed", "Acc(Total)", "RAM(4k)"],
-        tablefmt="github"
-    ))
-
-    print("\nDETAILED REASONING METRICS")
-    reason_rows = [
-        [
-            m["model"],
-            f"{m['acc_reason']}%",
-            f"{m['speed']} t/s",
-            f"{m['acc_total']}%",
-            f"{m['ram_cost']} GB"
-        ]
-        for m in logic_rank
-    ]
-    print(tabulate(
-        reason_rows,
-        headers=["Model", "Reason Acc", "Speed", "Acc(Total)", "RAM(4k)"],
-        tablefmt="github"
-    ))
-
-    print("\nDETAILED RAM METRICS")
-    ram_rows = [
-        [
-            m["model"],
-            f"{m['ram_cost']} GB",
-            f"{m['speed']} t/s",
-            f"{m['acc_total']}%"
-        ]
-        for m in budget_rank
-    ]
-    print(tabulate(
-        ram_rows,
-        headers=["Model", "RAM(4k)", "Speed", "Acc(Total)"],
-        tablefmt="github"
-    ))
-
-    print("\nDETAILED SPEED METRICS")
-    speed_rows = [
-        [
-            m["model"],
-            f"{m['speed']} t/s",
-            f"{m['acc_total']}%",
-            f"{m['ram_cost']} GB"
-        ]
-        for m in speed_rank
-    ]
-    print(tabulate(
-        speed_rows,
-        headers=["Model", "Speed", "Acc(Total)", "RAM(4k)"],
-        tablefmt="github"
-    ))
+    # --- PLOTTING ---
+    try:
+        plot_benchmark_results(raw_data)
+    except Exception as e:
+        print(f"\n⚠️ Plotting failed: {e}")
+        print("Ensure matplotlib and pandas are installed.")
 
 if __name__ == "__main__":
     main()
