@@ -6,5 +6,7 @@
 venv/
 __pycache__/
 
+models/
+
 # Keep the important stuff
 !benchmark_results.json
