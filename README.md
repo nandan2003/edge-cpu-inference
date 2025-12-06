@@ -279,7 +279,7 @@ Only model crossing 80% reasoning.
 
 ### Best General-Use Small Model
 
-**StableLM Zephyr (3B)**
+**Qwen 2.5 (3B)**
 
 ### Best Low-RAM / Edge
 
